@@ -27,3 +27,10 @@ NetActorFactory.cpp.sha256.original
 
 # Temp scratch from PR submission (Stages 1-5 of opening UE-357736 PR via gh API)
 Patches/tmp-pr/
+
+# Internal-workflow drafts and personal build logs (kept locally for the
+# author's submission workflow + artifact banking; not for public consumption)
+Patches/PR-description.md
+Patches/bug-submission-form.md
+Patches/source-build.log
+Patches/incremental-build-patched.log
