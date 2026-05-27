@@ -24,3 +24,6 @@ Thumbs.db
 # Backup files from local engine patching
 *.UE357736-backup
 NetActorFactory.cpp.sha256.original
+
+# Temp scratch from PR submission (Stages 1-5 of opening UE-357736 PR via gh API)
+Patches/tmp-pr/

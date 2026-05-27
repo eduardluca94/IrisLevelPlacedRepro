@@ -123,7 +123,7 @@ PostNetInit recovery doesn't cover the static-actor case. This patch
 extends the recovery to cover both paths.
 
 A pull request with this fix is also being submitted against
-EpicGames/UnrealEngine release branch: [INSERT PR URL HERE BEFORE FORM SUBMIT]
+EpicGames/UnrealEngine release branch: https://github.com/EpicGames/UnrealEngine/pull/14828
 ```
 
 ## Affects Versions *
@@ -141,7 +141,7 @@ This is supporting evidence for UE-357736 (currently Backlogged), submitting
 via this form for visibility of the attached repro project + proposed fix
 patch + before/after validation logs. A pull request with the same fix has
 been opened against EpicGames/UnrealEngine release branch:
-[INSERT PR URL HERE BEFORE FORM SUBMIT]
+https://github.com/EpicGames/UnrealEngine/pull/14828
 
 Validation summary (3 PIE runs each, identical project):
 
