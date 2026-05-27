@@ -1,0 +1,26 @@
+# Unreal Engine project build artifacts and per-machine state
+Binaries/
+Intermediate/
+DerivedDataCache/
+Saved/
+
+# Visual Studio
+*.sln
+*.suo
+*.user
+*.opensdf
+*.sdf
+*.VC.db
+*.VC.opendb
+.vs/
+
+# Rider
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Backup files from local engine patching
+*.UE357736-backup
+NetActorFactory.cpp.sha256.original

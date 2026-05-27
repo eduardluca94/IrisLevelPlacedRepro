@@ -1,0 +1,42 @@
+--- a/Engine/Source/Runtime/Engine/Private/Net/Iris/ReplicationSystem/NetActorFactory.cpp
++++ b/Engine/Source/Runtime/Engine/Private/Net/Iris/ReplicationSystem/NetActorFactory.cpp
+@@ -6,6 +6,8 @@
+ #include "Engine/NetDriver.h"
+ #include "Engine/World.h"
+ 
++#include "EngineStats.h"
++
+ #include "GameFramework/Actor.h"
+ 
+ #include "HAL/UnrealMemory.h"
+@@ -476,6 +478,30 @@
+ 			UE_TRACE_METADATA_SCOPE_ASSET(Actor, Actor->GetClass());
+ 			Actor->PostNetInit();
+ 		}
++		else if (!Actor->HasActorBegunPlay())
++		{
++			// UE-357736: for static (level-placed) actors, an earlier DispatchBeginPlay
++			// attempt during this same packet receive -- typically
++			// AGameStateBase::OnRep_ReplicatedHasBegunPlay -> AWorldSettings::NotifyBeginPlay
++			// -> FActorIterator -> AActor::DispatchBeginPlay -- may have early-returned because
++			// bActorIsPendingPostNetInit was still set (the flag is set above in
++			// InstantiateReplicatedObjectFromHeader and cleared by SetActorIsPendingPostNetInit(false)
++			// a few lines up). Re-attempt now that the flag is cleared so BeginPlay (and tick
++			// function registration via RegisterAllActorTickFunctions) is not permanently skipped
++			// on the client.
++			//
++			// bFromLevelStreaming=true matches AWorldSettings::NotifyBeginPlay's
++			// DispatchBeginPlay(bFromLevelLoad=true) call so user code observing
++			// IsActorBeginningPlayFromLevelStreaming() sees the same context as the
++			// non-buggy code path.
++			const UWorld* MyWorld = Actor->GetWorld();
++			if (MyWorld && MyWorld->HasBegunPlay())
++			{
++				SCOPE_CYCLE_COUNTER(STAT_ActorBeginPlay);
++				constexpr bool bFromLevelStreaming = true;
++				Actor->DispatchBeginPlay(bFromLevelStreaming);
++			}
++		}
+ 	}
+ }
+ 

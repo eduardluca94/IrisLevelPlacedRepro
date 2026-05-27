@@ -1,0 +1,430 @@
+=== Patched evidence: UE-357736-fix.patch validation on Unreal Engine 5.7.4 source ===
+
+Source: PIE Output Log from M_Repro.umap with the patch applied to a source-build
+clone of UE 5.7.4 at the 5.7.4-release tag. Patched binary built locally via
+Engine/Build/BatchFiles/Build.bat UnrealEditor Win64 Development. Verified the
+incremental rebuild touched NetActorFactory.cpp (Module.Engine.44.cpp recompiled,
+UnrealEditor-Engine.dll relinked).
+
+Filter (identical to baseline-evidence.log):
+- LogCsvProfiler: iris="..."                  (confirms Iris is enabled)
+- LogIris: ReplicationSystem ... is created   (confirms Iris init)
+- LogNet: ... using replication model ...     (confirms NetDriver chose Iris)
+- LogTemp: Warning: [Actor] BeginPlay -- Role=N
+
+Project, PIE config, expected behaviour: identical to baseline (see baseline-evidence.log).
+
+Result: every run shows 40/40 distinct Role=1 instance names on the client side
+(vs the 32/40 seen in baseline). Zero silent subsets. The 8 actors that were
+silent in the baseline are now visible via a SECOND WAVE of BeginPlay lines
+arriving after the main NotifyBeginPlay wave -- which is exactly the patch's
+new else-if-not-HasActorBegunPlay branch in UNetActorFactory::PostInit firing
+during Loop 2 of FlushPostDispatchForBatch, after Loop 1's OnRep_ReplicatedHasBegunPlay
+already ran. The recovered actors tick from the same frame onwards (same Tick
+counter values), confirming no observable client-side delay.
+
+
+===== Run 1 =====
+
+[2026.05.27-17.39.14:985][481]LogCsvProfiler: Display: Metadata set : iris="1"
+[2026.05.27-17.39.14:986][481]LogIris: Display: Iris ReplicationSystem[0]: ReplicationSystem_0 (0x000002308DDBB1C0) is created
+[2026.05.27-17.39.14:988][481]LogNet: InitBase GameNetDriver (NetDriverDefinition GameNetDriver) using replication model Iris
+[2026.05.27-17.39.14:992][481]LogTemp: Warning: [MinimalRepro_1] BeginPlay -- Role=3
+[2026.05.27-17.39.14:992][481]LogTemp: Warning: [MinimalRepro_2] BeginPlay -- Role=3
+[2026.05.27-17.39.14:992][481]LogTemp: Warning: [MinimalRepro_3] BeginPlay -- Role=3
+[2026.05.27-17.39.14:992][481]LogTemp: Warning: [MinimalRepro_4] BeginPlay -- Role=3
+[2026.05.27-17.39.14:992][481]LogTemp: Warning: [MinimalRepro_5] BeginPlay -- Role=3
+[2026.05.27-17.39.14:992][481]LogTemp: Warning: [MinimalRepro_6] BeginPlay -- Role=3
+[2026.05.27-17.39.14:992][481]LogTemp: Warning: [MinimalRepro_7] BeginPlay -- Role=3
+[2026.05.27-17.39.14:992][481]LogTemp: Warning: [MinimalRepro_8] BeginPlay -- Role=3
+[2026.05.27-17.39.14:992][481]LogTemp: Warning: [MinimalRepro_9] BeginPlay -- Role=3
+[2026.05.27-17.39.14:993][481]LogTemp: Warning: [MinimalRepro_10] BeginPlay -- Role=3
+[2026.05.27-17.39.14:993][481]LogTemp: Warning: [MinimalReproWithState_1] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.39.14:993][481]LogTemp: Warning: [MinimalReproWithState_2] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.39.14:993][481]LogTemp: Warning: [MinimalReproWithState_3] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.39.14:993][481]LogTemp: Warning: [MinimalReproWithState_4] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.39.14:993][481]LogTemp: Warning: [MinimalReproWithState_5] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.39.14:993][481]LogTemp: Warning: [MinimalReproWithState_6] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.39.14:993][481]LogTemp: Warning: [MinimalReproWithState_7] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.39.14:993][481]LogTemp: Warning: [MinimalReproWithState_8] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.39.14:993][481]LogTemp: Warning: [MinimalReproWithState_9] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.39.14:993][481]LogTemp: Warning: [MinimalReproWithState_10] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.39.14:993][481]LogTemp: Warning: [MinimalRepro_0] BeginPlay -- Role=3
+[2026.05.27-17.39.14:993][481]LogTemp: Warning: [MinimalRepro_11] BeginPlay -- Role=3
+[2026.05.27-17.39.14:993][481]LogTemp: Warning: [MinimalRepro_12] BeginPlay -- Role=3
+[2026.05.27-17.39.14:993][481]LogTemp: Warning: [MinimalRepro_13] BeginPlay -- Role=3
+[2026.05.27-17.39.14:993][481]LogTemp: Warning: [MinimalRepro_14] BeginPlay -- Role=3
+[2026.05.27-17.39.14:993][481]LogTemp: Warning: [MinimalRepro_15] BeginPlay -- Role=3
+[2026.05.27-17.39.14:993][481]LogTemp: Warning: [MinimalRepro_16] BeginPlay -- Role=3
+[2026.05.27-17.39.14:993][481]LogTemp: Warning: [MinimalRepro_17] BeginPlay -- Role=3
+[2026.05.27-17.39.14:993][481]LogTemp: Warning: [MinimalRepro_18] BeginPlay -- Role=3
+[2026.05.27-17.39.14:993][481]LogTemp: Warning: [MinimalRepro_19] BeginPlay -- Role=3
+[2026.05.27-17.39.14:993][481]LogTemp: Warning: [MinimalReproWithState_0] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.39.14:993][481]LogTemp: Warning: [MinimalReproWithState_11] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.39.14:993][481]LogTemp: Warning: [MinimalReproWithState_12] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.39.14:993][481]LogTemp: Warning: [MinimalReproWithState_13] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.39.14:993][481]LogTemp: Warning: [MinimalReproWithState_14] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.39.14:993][481]LogTemp: Warning: [MinimalReproWithState_15] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.39.14:993][481]LogTemp: Warning: [MinimalReproWithState_16] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.39.14:993][481]LogTemp: Warning: [MinimalReproWithState_17] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.39.14:993][481]LogTemp: Warning: [MinimalReproWithState_18] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.39.14:993][481]LogTemp: Warning: [MinimalReproWithState_19] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.39.15:039][481]LogIris: Display: Iris ReplicationSystem[1]: ReplicationSystem_1 (0x0000023167EC3060) is created
+[2026.05.27-17.39.15:041][481]LogNet: InitBase PendingNetDriver (NetDriverDefinition GameNetDriver) using replication model Iris
+[2026.05.27-17.39.15:101][481]LogIris: Display: Iris ReplicationSystem[2]: ReplicationSystem_2 (0x0000023160D43CC0) is created
+[2026.05.27-17.39.15:103][481]LogNet: InitBase PendingNetDriver (NetDriverDefinition GameNetDriver) using replication model Iris
+[2026.05.27-17.39.16:168][539]LogTemp: Warning: [MinimalRepro_1] BeginPlay -- Role=1
+[2026.05.27-17.39.16:168][539]LogTemp: Warning: [MinimalRepro_2] BeginPlay -- Role=1
+[2026.05.27-17.39.16:168][539]LogTemp: Warning: [MinimalRepro_4] BeginPlay -- Role=1
+[2026.05.27-17.39.16:168][539]LogTemp: Warning: [MinimalRepro_5] BeginPlay -- Role=1
+[2026.05.27-17.39.16:168][539]LogTemp: Warning: [MinimalRepro_6] BeginPlay -- Role=1
+[2026.05.27-17.39.16:168][539]LogTemp: Warning: [MinimalRepro_10] BeginPlay -- Role=1
+[2026.05.27-17.39.16:168][539]LogTemp: Warning: [MinimalReproWithState_1] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.39.16:168][539]LogTemp: Warning: [MinimalReproWithState_2] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.39.16:168][539]LogTemp: Warning: [MinimalReproWithState_3] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.39.16:168][539]LogTemp: Warning: [MinimalReproWithState_4] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.39.16:168][539]LogTemp: Warning: [MinimalReproWithState_5] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.39.16:168][539]LogTemp: Warning: [MinimalReproWithState_7] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.39.16:168][539]LogTemp: Warning: [MinimalReproWithState_9] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.39.16:168][539]LogTemp: Warning: [MinimalReproWithState_10] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.39.16:168][539]LogTemp: Warning: [MinimalRepro_0] BeginPlay -- Role=1
+[2026.05.27-17.39.16:168][539]LogTemp: Warning: [MinimalRepro_12] BeginPlay -- Role=1
+[2026.05.27-17.39.16:168][539]LogTemp: Warning: [MinimalRepro_13] BeginPlay -- Role=1
+[2026.05.27-17.39.16:168][539]LogTemp: Warning: [MinimalRepro_14] BeginPlay -- Role=1
+[2026.05.27-17.39.16:168][539]LogTemp: Warning: [MinimalRepro_15] BeginPlay -- Role=1
+[2026.05.27-17.39.16:168][539]LogTemp: Warning: [MinimalRepro_16] BeginPlay -- Role=1
+[2026.05.27-17.39.16:168][539]LogTemp: Warning: [MinimalRepro_17] BeginPlay -- Role=1
+[2026.05.27-17.39.16:168][539]LogTemp: Warning: [MinimalRepro_18] BeginPlay -- Role=1
+[2026.05.27-17.39.16:168][539]LogTemp: Warning: [MinimalRepro_19] BeginPlay -- Role=1
+[2026.05.27-17.39.16:168][539]LogTemp: Warning: [MinimalReproWithState_0] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.39.16:168][539]LogTemp: Warning: [MinimalReproWithState_11] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.39.16:168][539]LogTemp: Warning: [MinimalReproWithState_12] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.39.16:168][539]LogTemp: Warning: [MinimalReproWithState_14] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.39.16:168][539]LogTemp: Warning: [MinimalReproWithState_16] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.39.16:169][539]LogTemp: Warning: [MinimalReproWithState_17] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.39.16:169][539]LogTemp: Warning: [MinimalReproWithState_18] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.39.16:169][539]LogTemp: Warning: [MinimalReproWithState_19] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.39.16:169][539]LogTemp: Warning: [MinimalRepro_3] BeginPlay -- Role=1
+[2026.05.27-17.39.16:169][539]LogTemp: Warning: [MinimalReproWithState_13] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.39.16:169][539]LogTemp: Warning: [MinimalReproWithState_8] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.39.16:169][539]LogTemp: Warning: [MinimalRepro_9] BeginPlay -- Role=1
+[2026.05.27-17.39.16:169][539]LogTemp: Warning: [MinimalRepro_11] BeginPlay -- Role=1
+[2026.05.27-17.39.16:169][539]LogTemp: Warning: [MinimalRepro_7] BeginPlay -- Role=1
+[2026.05.27-17.39.16:169][539]LogTemp: Warning: [MinimalReproWithState_6] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.39.16:169][539]LogTemp: Warning: [MinimalReproWithState_15] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.39.16:169][539]LogTemp: Warning: [MinimalRepro_8] BeginPlay -- Role=1
+[2026.05.27-17.39.16:355][543]LogTemp: Warning: [MinimalRepro_1] BeginPlay -- Role=1
+[2026.05.27-17.39.16:355][543]LogTemp: Warning: [MinimalRepro_2] BeginPlay -- Role=1
+[2026.05.27-17.39.16:355][543]LogTemp: Warning: [MinimalRepro_4] BeginPlay -- Role=1
+[2026.05.27-17.39.16:355][543]LogTemp: Warning: [MinimalRepro_5] BeginPlay -- Role=1
+[2026.05.27-17.39.16:355][543]LogTemp: Warning: [MinimalRepro_6] BeginPlay -- Role=1
+[2026.05.27-17.39.16:355][543]LogTemp: Warning: [MinimalRepro_8] BeginPlay -- Role=1
+[2026.05.27-17.39.16:355][543]LogTemp: Warning: [MinimalRepro_10] BeginPlay -- Role=1
+[2026.05.27-17.39.16:355][543]LogTemp: Warning: [MinimalReproWithState_1] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.39.16:355][543]LogTemp: Warning: [MinimalReproWithState_2] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.39.16:355][543]LogTemp: Warning: [MinimalReproWithState_3] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.39.16:355][543]LogTemp: Warning: [MinimalReproWithState_4] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.39.16:355][543]LogTemp: Warning: [MinimalReproWithState_5] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.39.16:355][543]LogTemp: Warning: [MinimalReproWithState_7] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.39.16:355][543]LogTemp: Warning: [MinimalReproWithState_9] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.39.16:355][543]LogTemp: Warning: [MinimalReproWithState_10] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.39.16:355][543]LogTemp: Warning: [MinimalRepro_0] BeginPlay -- Role=1
+[2026.05.27-17.39.16:355][543]LogTemp: Warning: [MinimalRepro_12] BeginPlay -- Role=1
+[2026.05.27-17.39.16:355][543]LogTemp: Warning: [MinimalRepro_13] BeginPlay -- Role=1
+[2026.05.27-17.39.16:355][543]LogTemp: Warning: [MinimalRepro_14] BeginPlay -- Role=1
+[2026.05.27-17.39.16:355][543]LogTemp: Warning: [MinimalRepro_15] BeginPlay -- Role=1
+[2026.05.27-17.39.16:355][543]LogTemp: Warning: [MinimalRepro_16] BeginPlay -- Role=1
+[2026.05.27-17.39.16:355][543]LogTemp: Warning: [MinimalRepro_17] BeginPlay -- Role=1
+[2026.05.27-17.39.16:355][543]LogTemp: Warning: [MinimalRepro_18] BeginPlay -- Role=1
+[2026.05.27-17.39.16:355][543]LogTemp: Warning: [MinimalRepro_19] BeginPlay -- Role=1
+[2026.05.27-17.39.16:355][543]LogTemp: Warning: [MinimalReproWithState_0] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.39.16:355][543]LogTemp: Warning: [MinimalReproWithState_11] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.39.16:355][543]LogTemp: Warning: [MinimalReproWithState_12] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.39.16:355][543]LogTemp: Warning: [MinimalReproWithState_14] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.39.16:355][543]LogTemp: Warning: [MinimalReproWithState_16] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.39.16:355][543]LogTemp: Warning: [MinimalReproWithState_17] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.39.16:355][543]LogTemp: Warning: [MinimalReproWithState_18] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.39.16:355][543]LogTemp: Warning: [MinimalReproWithState_19] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.39.16:355][543]LogTemp: Warning: [MinimalRepro_3] BeginPlay -- Role=1
+[2026.05.27-17.39.16:355][543]LogTemp: Warning: [MinimalReproWithState_13] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.39.16:355][543]LogTemp: Warning: [MinimalReproWithState_8] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.39.16:355][543]LogTemp: Warning: [MinimalRepro_9] BeginPlay -- Role=1
+[2026.05.27-17.39.16:355][543]LogTemp: Warning: [MinimalRepro_11] BeginPlay -- Role=1
+[2026.05.27-17.39.16:355][543]LogTemp: Warning: [MinimalRepro_7] BeginPlay -- Role=1
+[2026.05.27-17.39.16:355][543]LogTemp: Warning: [MinimalReproWithState_6] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.39.16:355][543]LogTemp: Warning: [MinimalReproWithState_15] BeginPlay -- Role=1 SomeFloat=1.000000
+
+--- Run 1 summary ---
+Server (Role=3) BeginPlay count: 40
+Total client (Role=1) BeginPlay lines across both clients: 80
+Distinct Role=1 instance names (union over both clients): 40
+
+===== Run 2 =====
+
+[2026.05.27-17.46.25:888][146]LogCsvProfiler: Display: Metadata set : iris="1"
+[2026.05.27-17.46.25:888][146]LogIris: Display: Iris ReplicationSystem[0]: ReplicationSystem_0 (0x000002AA10D1CD80) is created
+[2026.05.27-17.46.25:890][146]LogNet: InitBase GameNetDriver (NetDriverDefinition GameNetDriver) using replication model Iris
+[2026.05.27-17.46.25:891][146]LogTemp: Warning: [MinimalRepro_1] BeginPlay -- Role=3
+[2026.05.27-17.46.25:891][146]LogTemp: Warning: [MinimalRepro_2] BeginPlay -- Role=3
+[2026.05.27-17.46.25:891][146]LogTemp: Warning: [MinimalRepro_3] BeginPlay -- Role=3
+[2026.05.27-17.46.25:891][146]LogTemp: Warning: [MinimalRepro_4] BeginPlay -- Role=3
+[2026.05.27-17.46.25:891][146]LogTemp: Warning: [MinimalRepro_5] BeginPlay -- Role=3
+[2026.05.27-17.46.25:891][146]LogTemp: Warning: [MinimalRepro_6] BeginPlay -- Role=3
+[2026.05.27-17.46.25:891][146]LogTemp: Warning: [MinimalRepro_7] BeginPlay -- Role=3
+[2026.05.27-17.46.25:891][146]LogTemp: Warning: [MinimalRepro_8] BeginPlay -- Role=3
+[2026.05.27-17.46.25:891][146]LogTemp: Warning: [MinimalRepro_9] BeginPlay -- Role=3
+[2026.05.27-17.46.25:891][146]LogTemp: Warning: [MinimalRepro_10] BeginPlay -- Role=3
+[2026.05.27-17.46.25:891][146]LogTemp: Warning: [MinimalReproWithState_1] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.46.25:891][146]LogTemp: Warning: [MinimalReproWithState_2] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.46.25:891][146]LogTemp: Warning: [MinimalReproWithState_3] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.46.25:891][146]LogTemp: Warning: [MinimalReproWithState_4] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.46.25:891][146]LogTemp: Warning: [MinimalReproWithState_5] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.46.25:891][146]LogTemp: Warning: [MinimalReproWithState_6] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.46.25:891][146]LogTemp: Warning: [MinimalReproWithState_7] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.46.25:891][146]LogTemp: Warning: [MinimalReproWithState_8] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.46.25:891][146]LogTemp: Warning: [MinimalReproWithState_9] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.46.25:891][146]LogTemp: Warning: [MinimalReproWithState_10] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.46.25:891][146]LogTemp: Warning: [MinimalRepro_0] BeginPlay -- Role=3
+[2026.05.27-17.46.25:891][146]LogTemp: Warning: [MinimalRepro_11] BeginPlay -- Role=3
+[2026.05.27-17.46.25:891][146]LogTemp: Warning: [MinimalRepro_12] BeginPlay -- Role=3
+[2026.05.27-17.46.25:891][146]LogTemp: Warning: [MinimalRepro_13] BeginPlay -- Role=3
+[2026.05.27-17.46.25:891][146]LogTemp: Warning: [MinimalRepro_14] BeginPlay -- Role=3
+[2026.05.27-17.46.25:891][146]LogTemp: Warning: [MinimalRepro_15] BeginPlay -- Role=3
+[2026.05.27-17.46.25:891][146]LogTemp: Warning: [MinimalRepro_16] BeginPlay -- Role=3
+[2026.05.27-17.46.25:891][146]LogTemp: Warning: [MinimalRepro_17] BeginPlay -- Role=3
+[2026.05.27-17.46.25:891][146]LogTemp: Warning: [MinimalRepro_18] BeginPlay -- Role=3
+[2026.05.27-17.46.25:891][146]LogTemp: Warning: [MinimalRepro_19] BeginPlay -- Role=3
+[2026.05.27-17.46.25:891][146]LogTemp: Warning: [MinimalReproWithState_0] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.46.25:891][146]LogTemp: Warning: [MinimalReproWithState_11] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.46.25:891][146]LogTemp: Warning: [MinimalReproWithState_12] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.46.25:891][146]LogTemp: Warning: [MinimalReproWithState_13] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.46.25:891][146]LogTemp: Warning: [MinimalReproWithState_14] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.46.25:891][146]LogTemp: Warning: [MinimalReproWithState_15] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.46.25:891][146]LogTemp: Warning: [MinimalReproWithState_16] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.46.25:891][146]LogTemp: Warning: [MinimalReproWithState_17] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.46.25:891][146]LogTemp: Warning: [MinimalReproWithState_18] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.46.25:891][146]LogTemp: Warning: [MinimalReproWithState_19] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.46.25:931][146]LogIris: Display: Iris ReplicationSystem[1]: ReplicationSystem_1 (0x000002AA10D13540) is created
+[2026.05.27-17.46.25:932][146]LogNet: InitBase PendingNetDriver (NetDriverDefinition GameNetDriver) using replication model Iris
+[2026.05.27-17.46.25:995][146]LogIris: Display: Iris ReplicationSystem[2]: ReplicationSystem_2 (0x000002AA436ACBA0) is created
+[2026.05.27-17.46.25:996][146]LogNet: InitBase PendingNetDriver (NetDriverDefinition GameNetDriver) using replication model Iris
+[2026.05.27-17.46.27:039][218]LogTemp: Warning: [MinimalRepro_1] BeginPlay -- Role=1
+[2026.05.27-17.46.27:039][218]LogTemp: Warning: [MinimalRepro_2] BeginPlay -- Role=1
+[2026.05.27-17.46.27:039][218]LogTemp: Warning: [MinimalRepro_4] BeginPlay -- Role=1
+[2026.05.27-17.46.27:039][218]LogTemp: Warning: [MinimalRepro_5] BeginPlay -- Role=1
+[2026.05.27-17.46.27:039][218]LogTemp: Warning: [MinimalRepro_6] BeginPlay -- Role=1
+[2026.05.27-17.46.27:039][218]LogTemp: Warning: [MinimalRepro_10] BeginPlay -- Role=1
+[2026.05.27-17.46.27:039][218]LogTemp: Warning: [MinimalReproWithState_1] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.46.27:039][218]LogTemp: Warning: [MinimalReproWithState_2] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.46.27:039][218]LogTemp: Warning: [MinimalReproWithState_3] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.46.27:039][218]LogTemp: Warning: [MinimalReproWithState_4] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.46.27:039][218]LogTemp: Warning: [MinimalReproWithState_5] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.46.27:039][218]LogTemp: Warning: [MinimalReproWithState_7] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.46.27:039][218]LogTemp: Warning: [MinimalReproWithState_9] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.46.27:039][218]LogTemp: Warning: [MinimalReproWithState_10] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.46.27:039][218]LogTemp: Warning: [MinimalRepro_0] BeginPlay -- Role=1
+[2026.05.27-17.46.27:039][218]LogTemp: Warning: [MinimalRepro_12] BeginPlay -- Role=1
+[2026.05.27-17.46.27:039][218]LogTemp: Warning: [MinimalRepro_13] BeginPlay -- Role=1
+[2026.05.27-17.46.27:039][218]LogTemp: Warning: [MinimalRepro_14] BeginPlay -- Role=1
+[2026.05.27-17.46.27:039][218]LogTemp: Warning: [MinimalRepro_15] BeginPlay -- Role=1
+[2026.05.27-17.46.27:039][218]LogTemp: Warning: [MinimalRepro_16] BeginPlay -- Role=1
+[2026.05.27-17.46.27:039][218]LogTemp: Warning: [MinimalRepro_17] BeginPlay -- Role=1
+[2026.05.27-17.46.27:039][218]LogTemp: Warning: [MinimalRepro_18] BeginPlay -- Role=1
+[2026.05.27-17.46.27:039][218]LogTemp: Warning: [MinimalRepro_19] BeginPlay -- Role=1
+[2026.05.27-17.46.27:039][218]LogTemp: Warning: [MinimalReproWithState_0] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.46.27:039][218]LogTemp: Warning: [MinimalReproWithState_11] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.46.27:039][218]LogTemp: Warning: [MinimalReproWithState_12] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.46.27:039][218]LogTemp: Warning: [MinimalReproWithState_14] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.46.27:039][218]LogTemp: Warning: [MinimalReproWithState_16] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.46.27:039][218]LogTemp: Warning: [MinimalReproWithState_17] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.46.27:039][218]LogTemp: Warning: [MinimalReproWithState_18] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.46.27:039][218]LogTemp: Warning: [MinimalReproWithState_19] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.46.27:039][218]LogTemp: Warning: [MinimalRepro_3] BeginPlay -- Role=1
+[2026.05.27-17.46.27:039][218]LogTemp: Warning: [MinimalReproWithState_13] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.46.27:039][218]LogTemp: Warning: [MinimalReproWithState_8] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.46.27:039][218]LogTemp: Warning: [MinimalRepro_9] BeginPlay -- Role=1
+[2026.05.27-17.46.27:039][218]LogTemp: Warning: [MinimalRepro_11] BeginPlay -- Role=1
+[2026.05.27-17.46.27:039][218]LogTemp: Warning: [MinimalRepro_7] BeginPlay -- Role=1
+[2026.05.27-17.46.27:039][218]LogTemp: Warning: [MinimalReproWithState_6] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.46.27:039][218]LogTemp: Warning: [MinimalReproWithState_15] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.46.27:039][218]LogTemp: Warning: [MinimalRepro_8] BeginPlay -- Role=1
+[2026.05.27-17.46.27:168][222]LogTemp: Warning: [MinimalRepro_1] BeginPlay -- Role=1
+[2026.05.27-17.46.27:168][222]LogTemp: Warning: [MinimalRepro_2] BeginPlay -- Role=1
+[2026.05.27-17.46.27:168][222]LogTemp: Warning: [MinimalRepro_4] BeginPlay -- Role=1
+[2026.05.27-17.46.27:168][222]LogTemp: Warning: [MinimalRepro_5] BeginPlay -- Role=1
+[2026.05.27-17.46.27:168][222]LogTemp: Warning: [MinimalRepro_6] BeginPlay -- Role=1
+[2026.05.27-17.46.27:168][222]LogTemp: Warning: [MinimalRepro_8] BeginPlay -- Role=1
+[2026.05.27-17.46.27:168][222]LogTemp: Warning: [MinimalRepro_10] BeginPlay -- Role=1
+[2026.05.27-17.46.27:168][222]LogTemp: Warning: [MinimalReproWithState_1] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.46.27:168][222]LogTemp: Warning: [MinimalReproWithState_2] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.46.27:168][222]LogTemp: Warning: [MinimalReproWithState_3] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.46.27:168][222]LogTemp: Warning: [MinimalReproWithState_4] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.46.27:168][222]LogTemp: Warning: [MinimalReproWithState_5] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.46.27:168][222]LogTemp: Warning: [MinimalReproWithState_7] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.46.27:168][222]LogTemp: Warning: [MinimalReproWithState_9] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.46.27:168][222]LogTemp: Warning: [MinimalReproWithState_10] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.46.27:168][222]LogTemp: Warning: [MinimalRepro_0] BeginPlay -- Role=1
+[2026.05.27-17.46.27:168][222]LogTemp: Warning: [MinimalRepro_12] BeginPlay -- Role=1
+[2026.05.27-17.46.27:168][222]LogTemp: Warning: [MinimalRepro_13] BeginPlay -- Role=1
+[2026.05.27-17.46.27:168][222]LogTemp: Warning: [MinimalRepro_14] BeginPlay -- Role=1
+[2026.05.27-17.46.27:168][222]LogTemp: Warning: [MinimalRepro_15] BeginPlay -- Role=1
+[2026.05.27-17.46.27:168][222]LogTemp: Warning: [MinimalRepro_16] BeginPlay -- Role=1
+[2026.05.27-17.46.27:168][222]LogTemp: Warning: [MinimalRepro_17] BeginPlay -- Role=1
+[2026.05.27-17.46.27:168][222]LogTemp: Warning: [MinimalRepro_18] BeginPlay -- Role=1
+[2026.05.27-17.46.27:168][222]LogTemp: Warning: [MinimalRepro_19] BeginPlay -- Role=1
+[2026.05.27-17.46.27:168][222]LogTemp: Warning: [MinimalReproWithState_0] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.46.27:168][222]LogTemp: Warning: [MinimalReproWithState_11] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.46.27:168][222]LogTemp: Warning: [MinimalReproWithState_12] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.46.27:168][222]LogTemp: Warning: [MinimalReproWithState_14] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.46.27:168][222]LogTemp: Warning: [MinimalReproWithState_16] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.46.27:168][222]LogTemp: Warning: [MinimalReproWithState_17] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.46.27:168][222]LogTemp: Warning: [MinimalReproWithState_18] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.46.27:168][222]LogTemp: Warning: [MinimalReproWithState_19] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.46.27:168][222]LogTemp: Warning: [MinimalRepro_3] BeginPlay -- Role=1
+[2026.05.27-17.46.27:168][222]LogTemp: Warning: [MinimalReproWithState_13] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.46.27:168][222]LogTemp: Warning: [MinimalReproWithState_8] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.46.27:168][222]LogTemp: Warning: [MinimalRepro_9] BeginPlay -- Role=1
+[2026.05.27-17.46.27:168][222]LogTemp: Warning: [MinimalRepro_11] BeginPlay -- Role=1
+[2026.05.27-17.46.27:168][222]LogTemp: Warning: [MinimalRepro_7] BeginPlay -- Role=1
+[2026.05.27-17.46.27:168][222]LogTemp: Warning: [MinimalReproWithState_6] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.46.27:168][222]LogTemp: Warning: [MinimalReproWithState_15] BeginPlay -- Role=1 SomeFloat=1.000000
+
+--- Run 2 summary ---
+Server (Role=3) BeginPlay count: 40
+Total client (Role=1) BeginPlay lines across both clients: 80
+Distinct Role=1 instance names (union over both clients): 40
+
+===== Run 3 =====
+
+[2026.05.27-17.47.59:898][122]LogCsvProfiler: Display: Metadata set : iris="1"
+[2026.05.27-17.47.59:898][122]LogIris: Display: Iris ReplicationSystem[0]: ReplicationSystem_0 (0x000002031C44F360) is created
+[2026.05.27-17.47.59:900][122]LogNet: InitBase GameNetDriver (NetDriverDefinition GameNetDriver) using replication model Iris
+[2026.05.27-17.47.59:901][122]LogTemp: Warning: [MinimalRepro_1] BeginPlay -- Role=3
+[2026.05.27-17.47.59:901][122]LogTemp: Warning: [MinimalRepro_2] BeginPlay -- Role=3
+[2026.05.27-17.47.59:901][122]LogTemp: Warning: [MinimalRepro_3] BeginPlay -- Role=3
+[2026.05.27-17.47.59:901][122]LogTemp: Warning: [MinimalRepro_4] BeginPlay -- Role=3
+[2026.05.27-17.47.59:901][122]LogTemp: Warning: [MinimalRepro_5] BeginPlay -- Role=3
+[2026.05.27-17.47.59:901][122]LogTemp: Warning: [MinimalRepro_6] BeginPlay -- Role=3
+[2026.05.27-17.47.59:901][122]LogTemp: Warning: [MinimalRepro_7] BeginPlay -- Role=3
+[2026.05.27-17.47.59:901][122]LogTemp: Warning: [MinimalRepro_8] BeginPlay -- Role=3
+[2026.05.27-17.47.59:901][122]LogTemp: Warning: [MinimalRepro_9] BeginPlay -- Role=3
+[2026.05.27-17.47.59:901][122]LogTemp: Warning: [MinimalRepro_10] BeginPlay -- Role=3
+[2026.05.27-17.47.59:901][122]LogTemp: Warning: [MinimalReproWithState_1] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.47.59:901][122]LogTemp: Warning: [MinimalReproWithState_2] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.47.59:901][122]LogTemp: Warning: [MinimalReproWithState_3] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.47.59:901][122]LogTemp: Warning: [MinimalReproWithState_4] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.47.59:901][122]LogTemp: Warning: [MinimalReproWithState_5] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.47.59:901][122]LogTemp: Warning: [MinimalReproWithState_6] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.47.59:901][122]LogTemp: Warning: [MinimalReproWithState_7] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.47.59:901][122]LogTemp: Warning: [MinimalReproWithState_8] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.47.59:901][122]LogTemp: Warning: [MinimalReproWithState_9] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.47.59:901][122]LogTemp: Warning: [MinimalReproWithState_10] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.47.59:901][122]LogTemp: Warning: [MinimalRepro_0] BeginPlay -- Role=3
+[2026.05.27-17.47.59:901][122]LogTemp: Warning: [MinimalRepro_11] BeginPlay -- Role=3
+[2026.05.27-17.47.59:901][122]LogTemp: Warning: [MinimalRepro_12] BeginPlay -- Role=3
+[2026.05.27-17.47.59:901][122]LogTemp: Warning: [MinimalRepro_13] BeginPlay -- Role=3
+[2026.05.27-17.47.59:901][122]LogTemp: Warning: [MinimalRepro_14] BeginPlay -- Role=3
+[2026.05.27-17.47.59:901][122]LogTemp: Warning: [MinimalRepro_15] BeginPlay -- Role=3
+[2026.05.27-17.47.59:901][122]LogTemp: Warning: [MinimalRepro_16] BeginPlay -- Role=3
+[2026.05.27-17.47.59:901][122]LogTemp: Warning: [MinimalRepro_17] BeginPlay -- Role=3
+[2026.05.27-17.47.59:901][122]LogTemp: Warning: [MinimalRepro_18] BeginPlay -- Role=3
+[2026.05.27-17.47.59:901][122]LogTemp: Warning: [MinimalRepro_19] BeginPlay -- Role=3
+[2026.05.27-17.47.59:901][122]LogTemp: Warning: [MinimalReproWithState_0] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.47.59:901][122]LogTemp: Warning: [MinimalReproWithState_11] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.47.59:901][122]LogTemp: Warning: [MinimalReproWithState_12] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.47.59:901][122]LogTemp: Warning: [MinimalReproWithState_13] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.47.59:901][122]LogTemp: Warning: [MinimalReproWithState_14] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.47.59:901][122]LogTemp: Warning: [MinimalReproWithState_15] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.47.59:901][122]LogTemp: Warning: [MinimalReproWithState_16] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.47.59:901][122]LogTemp: Warning: [MinimalReproWithState_17] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.47.59:901][122]LogTemp: Warning: [MinimalReproWithState_18] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.47.59:901][122]LogTemp: Warning: [MinimalReproWithState_19] BeginPlay -- Role=3 SomeFloat=1.000000
+[2026.05.27-17.47.59:940][122]LogIris: Display: Iris ReplicationSystem[1]: ReplicationSystem_1 (0x000002031C444E60) is created
+[2026.05.27-17.47.59:943][122]LogNet: InitBase PendingNetDriver (NetDriverDefinition GameNetDriver) using replication model Iris
+[2026.05.27-17.48.00:005][122]LogIris: Display: Iris ReplicationSystem[2]: ReplicationSystem_2 (0x0000020312E7B4C0) is created
+[2026.05.27-17.48.00:007][122]LogNet: InitBase PendingNetDriver (NetDriverDefinition GameNetDriver) using replication model Iris
+[2026.05.27-17.48.01:050][190]LogTemp: Warning: [MinimalRepro_1] BeginPlay -- Role=1
+[2026.05.27-17.48.01:050][190]LogTemp: Warning: [MinimalRepro_2] BeginPlay -- Role=1
+[2026.05.27-17.48.01:050][190]LogTemp: Warning: [MinimalRepro_4] BeginPlay -- Role=1
+[2026.05.27-17.48.01:050][190]LogTemp: Warning: [MinimalRepro_5] BeginPlay -- Role=1
+[2026.05.27-17.48.01:050][190]LogTemp: Warning: [MinimalRepro_6] BeginPlay -- Role=1
+[2026.05.27-17.48.01:050][190]LogTemp: Warning: [MinimalRepro_10] BeginPlay -- Role=1
+[2026.05.27-17.48.01:050][190]LogTemp: Warning: [MinimalReproWithState_1] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.48.01:050][190]LogTemp: Warning: [MinimalReproWithState_2] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.48.01:050][190]LogTemp: Warning: [MinimalReproWithState_3] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.48.01:050][190]LogTemp: Warning: [MinimalReproWithState_4] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.48.01:050][190]LogTemp: Warning: [MinimalReproWithState_5] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.48.01:050][190]LogTemp: Warning: [MinimalReproWithState_7] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.48.01:050][190]LogTemp: Warning: [MinimalReproWithState_9] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.48.01:050][190]LogTemp: Warning: [MinimalReproWithState_10] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.48.01:050][190]LogTemp: Warning: [MinimalRepro_0] BeginPlay -- Role=1
+[2026.05.27-17.48.01:050][190]LogTemp: Warning: [MinimalRepro_12] BeginPlay -- Role=1
+[2026.05.27-17.48.01:050][190]LogTemp: Warning: [MinimalRepro_13] BeginPlay -- Role=1
+[2026.05.27-17.48.01:050][190]LogTemp: Warning: [MinimalRepro_14] BeginPlay -- Role=1
+[2026.05.27-17.48.01:050][190]LogTemp: Warning: [MinimalRepro_15] BeginPlay -- Role=1
+[2026.05.27-17.48.01:050][190]LogTemp: Warning: [MinimalRepro_16] BeginPlay -- Role=1
+[2026.05.27-17.48.01:050][190]LogTemp: Warning: [MinimalRepro_17] BeginPlay -- Role=1
+[2026.05.27-17.48.01:050][190]LogTemp: Warning: [MinimalRepro_18] BeginPlay -- Role=1
+[2026.05.27-17.48.01:050][190]LogTemp: Warning: [MinimalRepro_19] BeginPlay -- Role=1
+[2026.05.27-17.48.01:050][190]LogTemp: Warning: [MinimalReproWithState_0] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.48.01:050][190]LogTemp: Warning: [MinimalReproWithState_11] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.48.01:050][190]LogTemp: Warning: [MinimalReproWithState_12] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.48.01:050][190]LogTemp: Warning: [MinimalReproWithState_14] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.48.01:050][190]LogTemp: Warning: [MinimalReproWithState_16] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.48.01:050][190]LogTemp: Warning: [MinimalReproWithState_17] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.48.01:050][190]LogTemp: Warning: [MinimalReproWithState_18] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.48.01:050][190]LogTemp: Warning: [MinimalReproWithState_19] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.48.01:050][190]LogTemp: Warning: [MinimalRepro_3] BeginPlay -- Role=1
+[2026.05.27-17.48.01:050][190]LogTemp: Warning: [MinimalReproWithState_13] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.48.01:050][190]LogTemp: Warning: [MinimalReproWithState_8] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.48.01:050][190]LogTemp: Warning: [MinimalRepro_9] BeginPlay -- Role=1
+[2026.05.27-17.48.01:050][190]LogTemp: Warning: [MinimalRepro_11] BeginPlay -- Role=1
+[2026.05.27-17.48.01:050][190]LogTemp: Warning: [MinimalRepro_7] BeginPlay -- Role=1
+[2026.05.27-17.48.01:050][190]LogTemp: Warning: [MinimalReproWithState_6] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.48.01:050][190]LogTemp: Warning: [MinimalReproWithState_15] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.48.01:050][190]LogTemp: Warning: [MinimalRepro_8] BeginPlay -- Role=1
+[2026.05.27-17.48.01:181][194]LogTemp: Warning: [MinimalRepro_1] BeginPlay -- Role=1
+[2026.05.27-17.48.01:181][194]LogTemp: Warning: [MinimalRepro_2] BeginPlay -- Role=1
+[2026.05.27-17.48.01:181][194]LogTemp: Warning: [MinimalRepro_4] BeginPlay -- Role=1
+[2026.05.27-17.48.01:181][194]LogTemp: Warning: [MinimalRepro_5] BeginPlay -- Role=1
+[2026.05.27-17.48.01:181][194]LogTemp: Warning: [MinimalRepro_6] BeginPlay -- Role=1
+[2026.05.27-17.48.01:181][194]LogTemp: Warning: [MinimalRepro_8] BeginPlay -- Role=1
+[2026.05.27-17.48.01:181][194]LogTemp: Warning: [MinimalRepro_10] BeginPlay -- Role=1
+[2026.05.27-17.48.01:181][194]LogTemp: Warning: [MinimalReproWithState_1] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.48.01:181][194]LogTemp: Warning: [MinimalReproWithState_2] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.48.01:181][194]LogTemp: Warning: [MinimalReproWithState_3] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.48.01:181][194]LogTemp: Warning: [MinimalReproWithState_4] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.48.01:181][194]LogTemp: Warning: [MinimalReproWithState_5] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.48.01:181][194]LogTemp: Warning: [MinimalReproWithState_7] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.48.01:181][194]LogTemp: Warning: [MinimalReproWithState_9] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.48.01:181][194]LogTemp: Warning: [MinimalReproWithState_10] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.48.01:181][194]LogTemp: Warning: [MinimalRepro_0] BeginPlay -- Role=1
+[2026.05.27-17.48.01:181][194]LogTemp: Warning: [MinimalRepro_12] BeginPlay -- Role=1
+[2026.05.27-17.48.01:181][194]LogTemp: Warning: [MinimalRepro_13] BeginPlay -- Role=1
+[2026.05.27-17.48.01:181][194]LogTemp: Warning: [MinimalRepro_14] BeginPlay -- Role=1
+[2026.05.27-17.48.01:181][194]LogTemp: Warning: [MinimalRepro_15] BeginPlay -- Role=1
+[2026.05.27-17.48.01:181][194]LogTemp: Warning: [MinimalRepro_16] BeginPlay -- Role=1
+[2026.05.27-17.48.01:181][194]LogTemp: Warning: [MinimalRepro_17] BeginPlay -- Role=1
+[2026.05.27-17.48.01:181][194]LogTemp: Warning: [MinimalRepro_18] BeginPlay -- Role=1
+[2026.05.27-17.48.01:181][194]LogTemp: Warning: [MinimalRepro_19] BeginPlay -- Role=1
+[2026.05.27-17.48.01:181][194]LogTemp: Warning: [MinimalReproWithState_0] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.48.01:181][194]LogTemp: Warning: [MinimalReproWithState_11] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.48.01:181][194]LogTemp: Warning: [MinimalReproWithState_12] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.48.01:181][194]LogTemp: Warning: [MinimalReproWithState_14] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.48.01:181][194]LogTemp: Warning: [MinimalReproWithState_16] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.48.01:181][194]LogTemp: Warning: [MinimalReproWithState_17] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.48.01:181][194]LogTemp: Warning: [MinimalReproWithState_18] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.48.01:181][194]LogTemp: Warning: [MinimalReproWithState_19] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.48.01:181][194]LogTemp: Warning: [MinimalRepro_3] BeginPlay -- Role=1
+[2026.05.27-17.48.01:181][194]LogTemp: Warning: [MinimalReproWithState_13] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.48.01:181][194]LogTemp: Warning: [MinimalReproWithState_8] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.48.01:181][194]LogTemp: Warning: [MinimalRepro_9] BeginPlay -- Role=1
+[2026.05.27-17.48.01:181][194]LogTemp: Warning: [MinimalRepro_11] BeginPlay -- Role=1
+[2026.05.27-17.48.01:181][194]LogTemp: Warning: [MinimalRepro_7] BeginPlay -- Role=1
+[2026.05.27-17.48.01:181][194]LogTemp: Warning: [MinimalReproWithState_6] BeginPlay -- Role=1 SomeFloat=1.000000
+[2026.05.27-17.48.01:181][194]LogTemp: Warning: [MinimalReproWithState_15] BeginPlay -- Role=1 SomeFloat=1.000000
+
+--- Run 3 summary ---
+Server (Role=3) BeginPlay count: 40
+Total client (Role=1) BeginPlay lines across both clients: 80
+Distinct Role=1 instance names (union over both clients): 40
