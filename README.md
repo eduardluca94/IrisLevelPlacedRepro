@@ -121,6 +121,18 @@ The patch adds an `else if (!Actor->HasActorBegunPlay())` branch to `UNetActorFa
 
 Total diff: 1 include + ~22 line addition in `PostInit`. Smallest change that fixes UE-357736 without regressing existing dynamic-actor or `ALevelInstance` behavior.
 
+## Submission status
+
+This patch was submitted to EpicGames/UnrealEngine as PR [#14828](https://github.com/EpicGames/UnrealEngine/pull/14828), which was auto-closed by Epic's `UnrealBot` because the PR body didn't include the required `[ ] This change does not include source code created by Generative AI` checklist line from the project's `PULL_REQUEST_TEMPLATE.md`.
+
+The patch was developed in collaboration with an AI assistant during the engine-source investigation that produced this repo. The mechanism analysis and design decisions (e.g. `bFromLevelStreaming=true` matching `NotifyBeginPlay`'s call, inlining the recovery rather than calling virtual `PostNetInit` to avoid `ALevelInstance::PostNetInit`'s ensure) emerged from that collaboration; the C++ tokens in the patch itself were AI-drafted and then human-reviewed and empirically validated (3 baseline + 3 patched PIE runs, see `Patches/baseline-evidence.log` and `Patches/patched-evidence.log`).
+
+Resubmitting the PR with the AI-disclosure checkbox checked would have been a false declaration. I chose not to resubmit, honoring the policy.
+
+The contribution reaches Epic engineering through Epic's **Bug Submission Form** (Case #25104056 at `unrealbugsubmissions.epicgames.com`), which is a bug-report channel that does not invoke Epic's AI-disclosure policy. Epic engineers can read this repo (including the patch and validation evidence) freely; they can implement their own version of the fix under their internal authorship if/when UE-357736 is prioritized in their tracker.
+
+If you're a dev who hit UE-357736 and you want to use this patch locally as a stopgap until Epic ships an upstream fix: the engine source license permits private modification, so `Patches/UE-357736-fix.patch` applied to a source-build engine clone is a legitimate path. The `apply-patch.sh` and `revert-patch.sh` helpers are designed for safe round-tripping (SHA-256 hash verification).
+
 ## License
 
 Project files (`Source/`, `Content/`, `Config/`, `*.uproject`) are MIT-licensed. The patch in `Patches/UE-357736-fix.patch` modifies Unreal Engine source code and is subject to the Unreal Engine End User License Agreement.
